@@ -1,9 +1,147 @@
-import {useState} from 'react'
-import {foods} from '../data/foods'
-import type {Food} from '../domain/types'
-import type {Day} from './model'
-const groups=['主食','主要蛋白质','蔬果','脂肪','乳品'] as const
-type Group=typeof groups[number]
-function group(f:Food):Group{return f.role==='carb'?'主食':f.role==='protein'?'主要蛋白质':f.id.includes('milk')?'乳品':['almonds','walnuts'].includes(f.id)?'脂肪':'蔬果'}
-const icons:Record<Group,React.ReactNode>={主食:<><path d="M3 13h18c-1 5-4 7-9 7s-8-2-9-7Z"/><path d="M5 12c0-2 1-4 3-4 0-3 4-5 7-2 3-1 5 2 4 5M9 9l1 1m3-3 1 1m1 2 1 1"/></>,主要蛋白质:<><path d="M6 19c-3-2-3-6 0-10 3-5 5-6 7-5 5 1 7 7 6 11s-7 8-13 4Z"/><ellipse cx="12" cy="14" rx="3" ry="3"/></>,蔬果:<><path d="M4 10c2-3 5-3 8-1 2-3 7-3 8 1 3 6-3 12-8 11-5 0-9-5-8-11Z"/><path d="m12 9 1-6m-1 5-5-3m6 2 4-3"/></>,脂肪:<><path d="M6 18C1 12 9 4 17 3c5 8 2 16-5 17-2 0-5-1-6-2Z"/><path d="M7 17c1-4 4-8 9-12m-6 13 6-7"/></>,乳品:<><path d="m7 3 9 0v3l3 4v11H5V10l2-4ZM7 6h9m-9 4h12M7 15h7"/></>}
-export function FoodIndex({day,change}:{day:Day,change:(ids:string[])=>void}){const [filter,setFilter]=useState<Group[]>([]),[all,setAll]=useState(false);const top=['oats','rice','bread','egg','chicken','tofu','tomato','milk','almonds'];const rows=(filter.length?foods.filter(f=>filter.includes(group(f))):all?foods:top.map(id=>foods.find(f=>f.id===id)!));return <section className="pd-card pd-library"><div className="pd-heading"><div><small className="pd-kicker">01 / PANTRY</small><h2>当天食物库</h2></div><span className="pd-count">{day.available.length} 种可用</span></div><p className="pd-description">勾选今天可以吃的食物。不必全部用上，也不会自动记入摄入。</p><div className="pd-filters" aria-label="按食物分类筛选"><button aria-pressed={!filter.length} onClick={()=>setFilter([])}>全部</button>{groups.map(k=><button key={k} aria-pressed={filter.includes(k)} onClick={()=>setFilter(a=>a.includes(k)?a.filter(i=>i!==k):[...a,k])}>{k}</button>)}</div><div className="pd-foods">{rows.map(f=>{const yes=day.available.includes(f.id);return <label key={f.id} className={'pd-food '+(yes?'checked':'')}><input type="checkbox" checked={yes} aria-label={'可用：'+f.name} onChange={()=>change(yes?day.available.filter(i=>i!==f.id):[...day.available,f.id])}/><svg viewBox="0 0 24 24" aria-hidden="true">{icons[group(f)]}</svg><span>{f.id==='oats'?'原味燕麦片':f.name}<small>{f.id==='oats'?'需煮 · 干重':group(f)}</small></span><i aria-hidden="true">{yes?'✓':''}</i></label>})}</div>{!filter.length&&<button className="pd-more" onClick={()=>setAll(!all)}>{all?'收起食物目录 ↑':`展开全部 ${foods.length} 种食物 ↓`}</button>}</section>}
+import { useState, type ReactNode } from 'react'
+import { foods } from '../data/foods'
+import type { Food } from '../domain/types'
+import type { Day } from './model'
+
+const groups = ['主食', '主要蛋白质', '蔬果', '脂肪', '乳品'] as const
+type Group = (typeof groups)[number]
+
+function group(f: Food): Group {
+  if (f.role === 'carb') return '主食'
+  if (f.role === 'protein') return '主要蛋白质'
+  if (f.id.includes('milk')) return '乳品'
+  if (['almonds', 'walnuts'].includes(f.id)) return '脂肪'
+  return '蔬果'
+}
+
+const icons: Record<Group, ReactNode> = {
+  主食: (
+    <>
+      <path d="M3 13h18c-1 5-4 7-9 7s-8-2-9-7Z" />
+      <path d="M5 12c0-2 1-4 3-4 0-3 4-5 7-2 3-1 5 2 4 5M9 9l1 1m3-3 1 1m1 2 1 1" />
+    </>
+  ),
+  主要蛋白质: (
+    <>
+      <path d="M6 19c-3-2-3-6 0-10 3-5 5-6 7-5 5 1 7 7 6 11s-7 8-13 4Z" />
+      <ellipse cx="12" cy="14" rx="3" ry="3" />
+    </>
+  ),
+  蔬果: (
+    <>
+      <path d="M4 10c2-3 5-3 8-1 2-3 7-3 8 1 3 6-3 12-8 11-5 0-9-5-8-11Z" />
+      <path d="m12 9 1-6m-1 5-5-3m6 2 4-3" />
+    </>
+  ),
+  脂肪: (
+    <>
+      <path d="M6 18C1 12 9 4 17 3c5 8 2 16-5 17-2 0-5-1-6-2Z" />
+      <path d="M7 17c1-4 4-8 9-12m-6 13 6-7" />
+    </>
+  ),
+  乳品: (
+    <>
+      <path d="m7 3 9 0v3l3 4v11H5V10l2-4ZM7 6h9m-9 4h12M7 15h7" />
+    </>
+  ),
+}
+
+export function FoodIndex({
+  day,
+  change,
+}: {
+  day: Day
+  change: (ids: string[]) => void
+}) {
+  const [filter, setFilter] = useState<Group[]>([])
+  const [all, setAll] = useState(false)
+  const top = [
+    'oats',
+    'rice',
+    'bread',
+    'egg',
+    'chicken',
+    'tofu',
+    'tomato',
+    'milk',
+    'almonds',
+  ]
+  const rows = filter.length
+    ? foods.filter(f => filter.includes(group(f)))
+    : all
+      ? foods
+      : top.map(id => foods.find(f => f.id === id)!)
+
+  return (
+    <section className="pd-card pd-library">
+      <div className="pd-heading">
+        <div>
+          <small className="pd-kicker">01 / PANTRY</small>
+          <h2>当天食物库</h2>
+        </div>
+        <span className="pd-count">{day.available.length} 种可用</span>
+      </div>
+      <p className="pd-description">
+        勾选今天可以吃的食物。不必全部用上，也不会自动记入摄入。
+      </p>
+      <div className="pd-filters" aria-label="按食物分类筛选">
+        <button aria-pressed={!filter.length} onClick={() => setFilter([])}>
+          全部
+        </button>
+        {groups.map(k => (
+          <button
+            key={k}
+            aria-pressed={filter.includes(k)}
+            onClick={() =>
+              setFilter(a =>
+                a.includes(k) ? a.filter(i => i !== k) : [...a, k],
+              )
+            }
+          >
+            {k}
+          </button>
+        ))}
+      </div>
+      <div className="pd-foods">
+        {rows.map(f => {
+          const yes = day.available.includes(f.id)
+          const sublabel =
+            f.id === 'oats'
+              ? '需煮 · 干重'
+              : !f.zeroCook
+                ? `需烹饪 · ${group(f)}`
+                : group(f)
+          return (
+            <label key={f.id} className={'pd-food ' + (yes ? 'checked' : '')}>
+              <input
+                type="checkbox"
+                checked={yes}
+                aria-label={'可用：' + f.name}
+                onChange={() =>
+                  change(
+                    yes
+                      ? day.available.filter(i => i !== f.id)
+                      : [...day.available, f.id],
+                  )
+                }
+              />
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                {icons[group(f)]}
+              </svg>
+              <span>
+                {f.id === 'oats' ? '原味燕麦片' : f.name}
+                <small>{sublabel}</small>
+              </span>
+              <i aria-hidden="true">{yes ? '✓' : ''}</i>
+            </label>
+          )
+        })}
+      </div>
+      {!filter.length && (
+        <button className="pd-more" onClick={() => setAll(!all)}>
+          {all ? '收起食物目录 ↑' : `展开全部 ${foods.length} 种食物 ↓`}
+        </button>
+      )}
+    </section>
+  )
+}

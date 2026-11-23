@@ -42,3 +42,11 @@ it("rejects invalid portions, duplicated slots and corrupted JSON", () => {
   }
   expect(restore("{", today, DATA_VERSION, foods).journal).toEqual(j);
 });
+it("rejects foods with negative kcal or protein via known() semantics", () => {
+  const badFoods = foods.map((f) =>
+    f.id === "rice" ? { ...f, per100: { ...f.per100, kcal: -10 } } : f,
+  );
+  const res = restore(JSON.stringify(saved), today, DATA_VERSION, badFoods);
+  expect(res.notice).not.toBe("");
+  expect(res.journal.saved).toEqual([]);
+});

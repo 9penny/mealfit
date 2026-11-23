@@ -6,6 +6,7 @@ import {
   type Preferences,
   type Targets,
 } from "./domain/types";
+import { known } from "./engine/nutrition";
 export const STORE_KEY = "mealfit:journal:v1";
 export const slots: MealSlot[] = ["breakfast", "lunch", "dinner", "custom"];
 export type Journal = {
@@ -98,7 +99,7 @@ export function restore(
           !f ||
           p.grams < f.minG ||
           p.grams > f.maxG ||
-          !nutrients.slice(0, 2).every((k) => Number.isFinite(f.per100[k])) ||
+          !nutrients.slice(0, 2).every((k) => known(f.per100[k])) ||
           portions.some((i) => i.foodId === p.foodId)
         )
           throw Error();
