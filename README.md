@@ -30,7 +30,9 @@ npm run test:browser
 
 ### GitHub Actions
 
-[MealFit CI](.github/workflows/ci.yml) 在 PR 和推送到 `main` 时运行，也支持手动触发。PR 的 **Checks → Unit, build and browser checks** 显示单元测试、类型检查、生产构建以及三组 Chromium 回归（配餐、个人资料、每日目标）的结果。浏览器访问 runner 内的临时站点，不需要模型 Key、服务器凭据或已部署的站点。失败时已生成的截图最多保留 7 天。当前工作流只检查，不部署，也不修改线上数据。
+[MealFit CI](.github/workflows/ci.yml) 在 PR 和推送到 `main` 时运行，也支持手动触发。PR 的 **Checks → Unit, build and browser checks** 显示单元测试、类型检查、生产构建以及三组 Chromium 回归（配餐、个人资料、每日目标）的结果。浏览器访问 runner 内的临时站点，不需要模型 Key 或服务器凭据。失败时已生成的截图最多保留 7 天。
+
+推送到 `main`（或手动触发 `main`）且 `verify` 全部通过后，`deploy` job 会将同一份已验证的 `dist/` 产物自动部署到 Cloudflare Pages 项目 `mealfit`（线上地址 `https://meal.chaw.fyi`），需在仓库 Secrets 中配置 `CLOUDFLARE_API_TOKEN`（含 `Cloudflare Pages: Edit` 权限）与 `CLOUDFLARE_ACCOUNT_ID`。
 
 ## 开发接手入口
 
