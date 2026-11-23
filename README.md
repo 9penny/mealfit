@@ -1,25 +1,45 @@
-# MealFit
+# MealFit · 每日饮食手记
 
-**Choose your carbs and protein. MealFit completes the meal.**
+可交互原型：选定一天可用的食物，为每餐自己选主食和主要蛋白质，分别保留计划和实吃。**摄入目标是对照线，不是生成或记账的上限。**
 
-MealFit is an open-source, deterministic meal planner focused on low-effort eating. Users build **one meal at a time**, choose its primary carbohydrate and protein sources, and receive automatically selected complementary foods and gram amounts. Meals share a daily calorie and protein budget.
+## 试用
 
-## Principles
-- **Meal-first workflow:** breakfast, lunch and dinner are generated and saved independently; never require all three to be selected up front.
-- **Two main inputs:** primary carbohydrate and protein source for the selected meal.
-- **Daily constraints:** calorie target and protein minimum/target, updated as meals are saved or edited.
-- **Automatic completion:** choose other foods to improve nutrient coverage, convenience and affordability.
-- **No AI in MVP:** deterministic, explainable calculations with reproducible tests.
-- **Zero-cook first:** prioritize ready-to-eat foods, with optional cooked or pre-prepared choices.
-- **Transparency:** show food grams, nutrient contributions, source data, assumptions, and unmet/unknown targets.
+1. 用日历选择日期，按主食、主要蛋白质、蔬果、脂肪或乳品筛选，勾选当天可用的食物。原味燕麦片默认可用，按煮前干重计。勾选表示「可以吃」，不表示已吃或必须吃。
+2. 在早餐、午餐、晚餐或加餐中选择主食和主要蛋白质。点建议按钮预览份量，再决定是否采用。建议只从当天可用食物中搭配，以正常份量为基准参考当天目标。改目标或可用食物不会重排任何餐单。
+3. 分别修改计划和实吃克数。按计划记录时保留当时的原计划快照；额外吃的食物可以只记实吃。
+4. 右栏的热量和蛋白质只按当天自设目标计算差额。新日期两项都留空；点击对应卡片的「设置目标」，可拖滑条或输入数字再保存，清除后只记摄入量。蛋白质的人群参考仅在调整时展示，不自动采用。旧记录里无法区分是否手动选择过的 1,800 kcal 或 120 g 会保留为待确认旧值。**预计 = 已记录餐的实吃 + 未记录餐的计划**，同一餐不会累计两遍。食物库中的营养来源不代表营养达标；数据不全显示未知。账本默认展开其他营养素的推荐参考、实际差额和预计差额；没有适用参考时不生成数值。
+5. 顶部「个人资料」可选填年龄、参考性别、生理阶段、身高、体重和昵称。资料仅保存在此浏览器，不上传。未填年龄时可显示通用食品标签对照；适用的成人分组按资料取 DRI。自设参考按日期保留，当前资料仅影响各日显示的参考，不修改任何摄入记录。详见[参考值来源与适用范围](docs/REFERENCES.md)。
 
-See [Product requirements](docs/PRD.md), [Architecture](docs/ARCHITECTURE.md), and [Codex handoff](docs/CODEX_TASK.md).
+数据按浏览器及日期保存；刷新或回看其他日期不会丢失。无账号或云端同步，请用同一浏览器和访问地址查看同一份记录。旧版当天已保存的餐单首次读取时作为计划导入，不当成已吃，不删除旧记录。
 
-## Proposed stack
-React + TypeScript + Vite, local versioned food data, localStorage, unit tests, static GitHub Pages deployment. No backend or external AI dependency required.
+## 本地运行和测试
 
-## Status
-Specification phase; implementation pending.
+Node.js ≥22.12。React、TypeScript 和 Vite；无需后端或 AI API。
 
-## Safety
-Nutrition estimates are approximate, not medical advice. Calorie/protein targets are user-adjustable and should not be represented as individualized medical prescriptions.
+```sh
+npm ci
+npm run dev
+# 生产验证
+npm test
+npm run build
+npx playwright install chromium
+npm run test:browser
+```
+
+浏览器测试使用临时预览服务；可用 `CHROME_PATH` 指定系统 Chrome、`MEALFIT_URL` 指定已部署的测试地址。截图输出到 `artifacts/`。静态文件在 `dist/`。
+
+### GitHub Actions
+
+[MealFit CI](.github/workflows/ci.yml) 在 PR 和推送到 `main` 时运行，也支持手动触发。PR 的 **Checks → Unit, build and browser checks** 显示单元测试、类型检查、生产构建以及三组 Chromium 回归（配餐、个人资料、每日目标）的结果。浏览器访问 runner 内的临时站点，不需要模型 Key、服务器凭据或已部署的站点。失败时已生成的截图最多保留 7 天。当前工作流只检查，不部署，也不修改线上数据。
+
+## 开发接手入口
+
+- 当前首页由 `src/main.tsx` 挂载 `src/proto/Prototype.tsx`。每日账本、建议份量与日期存储在 `src/proto/model.ts`；营养参考在 `src/proto/reference.ts`。`src/App.tsx` 和 `src/engine/optimizer.ts` 是早期实现，不是当前主流程。
+- 改动前先读上面的「试用」，再看 `src/proto/model.test.ts` 与 `scripts/` 下的三组浏览器测试。验收时优先保护计划和实吃独立、旧数据可恢复、目标可留空这三条规则。
+- **尚未实现：**AI 建议、BYOK、免费积分、账号、跨设备同步和导入／导出。公网域名与自动部署是后续事项。当前 CI 不需要任何生产凭据；不要将真实用户记录、模型密钥或部署凭据放入仓库。
+
+## 数据与设计背景
+
+[食物数据与来源](docs/FOODS.md)：19 个 USDA FoodData Central 条目。数值按每 100 克可食部换算，生熟、沥干和强化差异见条目说明。数据未知不作零，营养估算不作医疗建议。
+
+[初版 PRD](docs/PRD.md)、[初版架构](docs/ARCHITECTURE.md)和[初版交接](docs/CODEX_TASK.md)保留作为历史资料。其中每日硬预算及仅保留当天记录的设想已由上面的双账原型取代。
